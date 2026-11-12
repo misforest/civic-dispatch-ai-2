@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>市政民意信箱智慧分案工作台</title>
+<title>市政民意信箱智慧分案工作台 (多單位平行分案版)</title>
 <!-- 引入 SheetJS 支援本機瀏覽器直接解析 .xlsx 試算表，避免二進位亂碼 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -11,6 +11,7 @@
   --paper:#EEF2F1; --surface:#FFFFFF; --sunk:#F6F8F7; --ink:#1C2B2D; --muted:#5B6B6D; --line:#D3DBDA;
   --jade:#1F6F5C; --jade-soft:#DDEEE8; --on-jade:#FFFFFF;
   --seal:#B3302A; --seal-soft:#F8E3E1; --amber:#9A6412; --amber-soft:#FBEFD9; --hl:#FFEB99;
+  --blue:#1A5F7A; --blue-soft:#E2F1F8;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
   --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
   color-scheme:light;
@@ -20,6 +21,7 @@
     --paper:#101819; --surface:#172223; --sunk:#131D1E; --ink:#E3EBE9; --muted:#93A5A3; --line:#2A3A3B;
     --jade:#5CC2A2; --jade-soft:#1B3530; --on-jade:#0E1A17;
     --seal:#EC5D50; --seal-soft:#3A1E1C; --amber:#E3AA4E; --amber-soft:#36290F; --hl:#5C4A0E;
+    --blue:#57A0D3; --blue-soft:#172C38;
     color-scheme:dark;
   }
 }
@@ -27,6 +29,7 @@
   --paper:#101819; --surface:#172223; --sunk:#131D1E; --ink:#E3EBE9; --muted:#93A5A3; --line:#2A3A3B;
   --jade:#5CC2A2; --jade-soft:#1B3530; --on-jade:#0E1A17;
   --seal:#EC5D50; --seal-soft:#3A1E1C; --amber:#E3AA4E; --amber-soft:#36290F; --hl:#5C4A0E;
+  --blue:#57A0D3; --blue-soft:#172C38;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -54,7 +57,7 @@ main{flex:1;min-height:0}
 .view[hidden]{display:none}
 
 /* 三欄分案工作台 */
-.bench{display:grid;grid-template-columns:330px minmax(0,1fr) 390px;height:100%;overflow:hidden}
+.bench{display:grid;grid-template-columns:330px minmax(0,1fr) 420px;height:100%;overflow:hidden}
 .queue{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--sunk)}
 .queue-tools{padding:12px;display:grid;gap:8px;border-bottom:1px solid var(--line)}
 .search{width:100%;padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
@@ -74,22 +77,29 @@ main{flex:1;min-height:0}
 .tag.suggested{background:var(--jade-soft);color:var(--jade)}
 .tag.review{background:var(--amber-soft);color:var(--amber)}
 .tag.routed{background:var(--seal-soft);color:var(--seal)}
+.tag.multi{background:var(--blue-soft);color:var(--blue);font-weight:600}
 .tag.urgent{background:var(--seal);color:#fff}
 .empty{padding:40px 20px;text-align:center;color:var(--muted)}
 
 .letter{overflow:auto;padding:28px 36px 60px}
 .letter h1{font-family:var(--serif);font-size:24px;line-height:1.35;margin:0 0 8px;font-weight:700;max-width:32em}
 .letter .meta{color:var(--muted);font-size:13px;display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-.letter .body{font-family:var(--serif);font-size:16px;line-height:1.9;max-width:38em;white-space:pre-wrap;word-break:break-word;background:var(--surface);padding:18px;border-radius:10px;border:1px solid var(--line)}
+.letter .body{font-family:var(--serif);font-size:16px;line-height:1.9;max-width:40em;white-space:pre-wrap;word-break:break-word;background:var(--surface);padding:18px;border-radius:10px;border:1px solid var(--line)}
 .letter-tools{display:flex;gap:12px;align-items:center;margin:0 0 14px;font-size:13px;color:var(--muted);flex-wrap:wrap}
 mark{background:var(--hl);color:inherit;padding:0 2px;border-radius:2px}
 .masked{background:var(--line);border-radius:3px;padding:0 4px;font-weight:600;color:var(--seal)}
 .switch{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 
+/* 訴求拆解區塊樣式 */
+.claims-box{margin-top:16px;background:var(--sunk);border:1px dashed var(--line);border-radius:10px;padding:14px}
+.claim-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;display:grid;gap:4px}
+.claim-head{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.claim-title{font-weight:700;color:var(--ink)}
+
 .decision{border-left:1px solid var(--line);background:var(--surface);overflow:auto;padding:20px 20px 40px;display:flex;flex-direction:column;gap:16px}
 .section-title{font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .ai-card{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--sunk)}
-.ai-card .lead{font-size:24px;font-weight:700;line-height:1.2;margin:2px 0 8px}
+.ai-card .lead{font-size:22px;font-weight:700;line-height:1.2;margin:2px 0 8px}
 .ai-card .lead small{font-size:12.5px;font-weight:400;color:var(--muted);margin-left:6px}
 .meter{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted)}
 .meter .bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
@@ -99,33 +109,34 @@ mark{background:var(--hl);color:inherit;padding:0 2px;border-radius:2px}
 .kv{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .notice{border-radius:8px;padding:8px 11px;font-size:13px;background:var(--amber-soft);color:var(--amber);line-height:1.45}
 .notice.err{background:var(--seal-soft);color:var(--seal)}
-.notice.success{background:var(--jade-soft);color:var(--jade)}
+.notice.info{background:var(--blue-soft);color:var(--blue)}
 
 label.field{display:grid;gap:4px;font-size:13px;color:var(--muted)}
 select,input[type=text],input[type=password],input[type=url],input[type=number],textarea{border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:var(--surface);color:var(--ink);width:100%}
 textarea{resize:vertical;min-height:65px;line-height:1.5}
-.chips{display:flex;flex-wrap:wrap;gap:5px;max-height:150px;overflow-y:auto;padding:4px;border:1px solid var(--line);border-radius:7px;background:var(--sunk)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;max-height:140px;overflow-y:auto;padding:4px;border:1px solid var(--line);border-radius:7px;background:var(--sunk)}
 .chips button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 8px;font-size:12px;cursor:pointer}
 .chips button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
-.chips button:disabled{opacity:.35;cursor:not-allowed}
 
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:5px;justify-content:center;transition:background .15s}
 .btn:hover{border-color:var(--muted)}
 .btn.primary{background:var(--jade);border-color:var(--jade);color:var(--on-jade)}
 .btn.primary:hover{filter:brightness(1.08)}
+.btn.blue{background:var(--blue);border-color:var(--blue);color:#fff}
 .btn.danger{color:var(--seal)}
-.btn.big{padding:10px 16px;font-size:15px;width:100%;font-weight:700}
+.btn.big{padding:10px 16px;font-size:14.5px;width:100%;font-weight:700}
 .btn:disabled{opacity:.5;cursor:progress}
 .kbd{font-size:11px;border:1px solid currentColor;border-radius:4px;padding:0 4px;opacity:.7}
 
-/* 公文分案章樣式 */
-.stamp-wrap{display:flex;justify-content:center;padding:8px 0}
-.stamp{border:3px double var(--seal);color:var(--seal);border-radius:8px;padding:10px 18px;font-family:var(--serif);transform:rotate(-5deg);text-align:center;background:var(--seal-soft);min-width:210px}
-.stamp .t{font-size:12px;letter-spacing:.3em;font-weight:600}
-.stamp .n{font-size:23px;font-weight:700;line-height:1.25;margin:3px 0}
-.stamp .d{font-size:12px}
-.stamp.hit{animation:stamp .45s cubic-bezier(.2,1.5,.4,1)}
-@keyframes stamp{0%{transform:scale(1.8) rotate(-14deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-5deg);opacity:1}}
+/* 公文分案章樣式（支援多印章平行排版） */
+.stamps-container{display:grid;gap:12px;margin:8px 0}
+.stamp{border:3px double var(--seal);color:var(--seal);border-radius:8px;padding:10px 14px;font-family:var(--serif);transform:rotate(-3deg);text-align:center;background:var(--seal-soft)}
+.stamp.parallel{border-color:var(--blue);color:var(--blue);background:var(--blue-soft);transform:rotate(1.5deg)}
+.stamp .t{font-size:11.5px;letter-spacing:.25em;font-weight:600}
+.stamp .n{font-size:20px;font-weight:700;line-height:1.25;margin:3px 0}
+.stamp .d{font-size:11.5px}
+.stamp .scope{font-size:11px;margin-top:4px;background:rgba(255,255,255,0.6);padding:2px 6px;border-radius:4px;display:inline-block}
+
 .spinner{width:15px;height:15px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -138,7 +149,6 @@ table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-weight:600;color:var(--muted);background:var(--sunk);white-space:nowrap}
 tr:last-child td{border-bottom:0}
-.changed{color:var(--amber);font-weight:600}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:20px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
 .stat .v{font-size:28px;font-weight:700;line-height:1.15}
@@ -147,10 +157,6 @@ tr:last-child td{border-bottom:0}
 .barrow{display:grid;grid-template-columns:140px 1fr 45px;gap:8px;align-items:center;font-size:13px}
 .barrow .track{height:12px;background:var(--sunk);border-radius:3px;overflow:hidden;display:flex}
 .barrow .track i{display:block;height:100%;background:var(--jade)}
-.barrow .track i.alt{background:var(--amber)}
-.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
-.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--jade);vertical-align:-1px}
-.legend span.alt::before{background:var(--amber)}
 .form-grid{display:grid;gap:14px;max-width:620px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
 .hint{font-size:12px;color:var(--muted)}
 .check{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;color:var(--ink);cursor:pointer}
@@ -165,7 +171,6 @@ dialog::backdrop{background:rgba(10,20,20,.4)}
 .toasts{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:grid;gap:6px;z-index:99}
 .toast{background:var(--ink);color:var(--surface);padding:8px 15px;border-radius:8px;font-size:13.5px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
 
-/* 批次自動工作流進度指示浮條 */
 .batch-bar{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--surface);border:2px solid var(--jade);padding:10px 20px;border-radius:30px;box-shadow:0 6px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:12px;z-index:90;font-size:14px;font-weight:600}
 
 @media (max-width:1150px){
@@ -183,7 +188,7 @@ dialog::backdrop{background:rgba(10,20,20,.4)}
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="mark" aria-hidden="true">政</span>市政民意信箱智慧分案工作台</div>
+  <div class="brand"><span class="mark" aria-hidden="true">政</span>市政民意信箱智慧分案工作台 <span class="tag multi" style="margin-left:6px">多單位平行分案版</span></div>
   <nav class="tabs" aria-label="主要功能">
     <button data-view="bench">分案工作台</button>
     <button data-view="agencies">機關職掌庫 (40)</button>
@@ -224,16 +229,16 @@ dialog::backdrop{background:rgba(10,20,20,.4)}
 
 <div id="batchProgress" class="batch-bar" style="display:none">
   <span class="spinner"></span>
-  <span id="batchProgressText">正在執行自動分案工作流...</span>
+  <span id="batchProgressText">正在執行多單位智慧分案工作流...</span>
 </div>
 
 <!-- 新增案件對話框 -->
 <dialog id="caseDlg">
   <form method="dialog">
-    <div class="dlg-head">新增民眾陳情案件</div>
+    <div class="dlg-head">新增民眾陳情案件 (支援複合訴求)</div>
     <div class="dlg-body">
-      <label class="field">案由 / 主旨<input type="text" id="newSubject" required></label>
-      <label class="field">陳情內容<textarea id="newContent" rows="7" required></textarea></label>
+      <label class="field">案由 / 主旨<input type="text" id="newSubject" placeholder="例：人行道地磚破損且騎樓長期遭機車違停" required></label>
+      <label class="field">陳情內容<textarea id="newContent" rows="7" placeholder="若包含多項訴求，系統將自動拆解並同時分案至對應機關..." required></textarea></label>
       <label class="field">地點 / 地址<input type="text" id="newLocation" placeholder="例如：東區光復路二段"></label>
       <label class="field">投書管道
         <select id="newChannel"><option>民意信箱</option><option>1999專線</option><option>線上陳情平台</option><option>市民陳情臨櫃</option></select>
@@ -241,22 +246,22 @@ dialog::backdrop{background:rgba(10,20,20,.4)}
     </div>
     <div class="dlg-foot">
       <button class="btn" value="cancel" formnovalidate>取消</button>
-      <button class="btn primary" value="ok" id="newOk">確認新增</button>
+      <button class="btn primary" value="ok">確認新增</button>
     </div>
   </form>
 </dialog>
 
-<!-- 匯入案件對話框（支援 Excel .xlsx / .xls 與 CSV / JSON，並提供自動工作流選項） -->
+<!-- 匯入案件對話框 -->
 <dialog id="importDlg">
   <form method="dialog">
     <div class="dlg-head">匯入案件資料 (支援 Excel .xlsx / .xls / CSV / JSON)</div>
     <div class="dlg-body">
-      <p class="hint" style="margin:0">內建 SheetJS 模組直接讀取 <b>Excel 檔案 (.xlsx)</b>，自動對齊欄位且不亂碼。</p>
+      <p class="hint" style="margin:0">原生解析 <b>Excel 檔案 (.xlsx)</b>，自動偵測單一或多項訴求，精準對齊機關。</p>
       <input type="file" id="importFile" accept=".xlsx,.xls,.csv,.json,.txt">
-      <label class="field">解析預覽 / 或直接貼上 CSV 內容：<textarea id="importText" rows="6" placeholder="案件編號,案由,內容,地點/地址,交辦單位&#10;TEST11500001,里民活動中心借用規則不清,民眾反映...,北區光華街,民政處"></textarea></label>
+      <label class="field">解析預覽 / 或直接貼上 CSV 內容：<textarea id="importText" rows="6" placeholder="案件編號,案由,內容,地點/地址,交辦單位&#10;TEST11500001,里民活動中心借用規則不清,民眾反映...,光華街,民政處"></textarea></label>
       <label class="check" style="background:var(--sunk);padding:10px;border-radius:8px;border:1px solid var(--line)">
         <input type="checkbox" id="autoWorkflowCheck" checked>
-        <span><b>匯入後立即自動執行「智慧分案工作流」</b><br><span class="hint">系統將逐筆自動研判：高信心單一權責直接核發派案；若無法明確判斷（信心不足、涉及危安或跨單位）則自動轉入「待人工審核」佇列。</span></span>
+        <span><b>匯入後立即自動執行「智慧多單位平行分案」</b><br><span class="hint">單一權責直接派發；多訴求案件自動拆解並<b>同時分給對應承辦單位</b>；遇重大疑義或危安則轉入待審。</span></span>
       </label>
       <p id="importMsg" class="hint" style="color:var(--jade);margin:0"></p>
     </div>
@@ -272,18 +277,18 @@ dialog::backdrop{background:rgba(10,20,20,.4)}
 <script>
 'use strict';
 
-const STORE_KEY = 'petition-routing-clean-v4';
+const STORE_KEY = 'petition-routing-parallel-v5';
 
 /* =========================================================
-   通用的 40 個正式局處與附屬機關完整職掌庫（已完全去除特定地域名稱）
+   通用的 40 個正式局處與附屬機關完整職掌庫
    ========================================================= */
-const DEFAULT_AGENCIES_CLEAN = [
+const DEFAULT_AGENCIES = [
   {id:'ag-traffic', name:'交通處', duties:'公車客運、公共自行車(YouBike)、交通號誌標線、停車場管理與收費、行人安全設施、待轉區改善', kw:['公車','號誌','紅綠燈','停車格','停車費','YouBike','自行車','斑馬線','待轉區','候車亭','客運','停車場','時相','秒數','行人穿越道','站牌']},
   {id:'ag-public-works', name:'工務處', duties:'雨水下水道、道路工程施工、排水防汛設施、公共管線挖掘、施工圍籬與交通維持', kw:['下水道','雨水下水道','排水設施','道路施工','施工圍籬','清淤','側溝排水','側溝','排水溝','工區視線']},
   {id:'ag-maintenance', name:'養護工程處', duties:'市轄道路鋪面維護、人行道破損修繕、共同管道修護、自行車道鋪面改善', kw:['人行道鋪面','人行道破損','地磚翹起','自行車道伸縮縫','坑洞','道路養護','路面凹陷','步道鋪面']},
-  {id:'ag-police', name:'警察局', duties:'交通違規取締、違規停車告發、深夜飆車及改裝車噪音取締、治安維護、詐騙與刑事案件', kw:['違規停車','違停','改裝車','危險駕駛','交通執法','未停讓','搶快','報案','治安','飆車','巡邏取締']},
+  {id:'ag-police', name:'警察局', duties:'交通違規取締、違規停車告發、深夜飆車及改裝車噪音取締、治安維護、詐騙與刑事案件', kw:['違規停車','違停','改裝車','危險駕駛','交通執法','未停讓','搶快','報案','治安','飆車','巡邏取締','占用騎樓']},
   {id:'ag-fire', name:'消防局', duties:'狹小巷道消防通道暢通、防火門維護巡查、社區防災演練、救災救護動線、火災預防', kw:['消防通道','狹小巷弄','逃生動線','防火門','消防安全檢查','滅火器實作','社區防災演練','救災動線']},
-  {id:'ag-epd', name:'環境保護局', duties:'夜間垃圾清運、資源回收車路線、空氣與環境異味、非法棄置垃圾、空地雜草髒亂稽查', kw:['垃圾堆置','資源回收車','收運路線','非法棄置','廢棄物','異味','蚊蟲','環境清潔','噪音檢測','垃圾車']},
+  {id:'ag-epd', name:'環境保護局', duties:'夜間垃圾清運、資源回收車路線、空氣與環境異味、非法棄置垃圾、空地雜草髒亂稽查', kw:['垃圾堆置','資源回收車','收運路線','非法棄置','廢棄物','異味','蚊蟲','環境清潔','噪音檢測','垃圾車','惡臭']},
   {id:'ag-health', name:'衛生局', duties:'食品餐飲衛生稽查、診所候診與醫療收費、社區飲用水檢驗管理、傳染病防治', kw:['食品衛生','食材覆蓋','餐飲衛生','診所候診','醫療收費','飲用水檢驗','公共飲水機','健檢合格','食安']},
   {id:'ag-social', name:'社會處', duties:'老人敬老福利、身心障礙補助與生活輔具津貼、弱勢家庭緊急救助與物資轉介、兒少托育', kw:['敬老福利','長者福利','身心障礙福利','身障補助','生活補助','弱勢家庭','緊急生活物資','社會救助','育兒津貼']},
   {id:'ag-labor', name:'勞工處', duties:'身心障礙求職無障礙引導、職業訓練開班、勞資爭議調解線上指引、勞動權益維護', kw:['就業服務','徵才活動','求職無障礙','職業訓練','職訓課程','勞資爭議調解','勞資糾紛','加班費','工資']},
@@ -320,42 +325,29 @@ const DEFAULT_AGENCIES_CLEAN = [
   {id:'ag-d-xiang', name:'香山區公所', duties:'香山區在地避難處所收容動線指引、長輩社區關懷據點電話專線報名', kw:['香山避難場所','香山區公所','大庄路避難','鄰里活動報名']}
 ];
 
-/* 預載 100 筆測試案例資料（已移除特定城市名稱） */
-const INITIAL_100_CASES = [
-  {id:"TEST11500001",subject:"里民活動中心借用規則不清",content:"民眾反映，里民活動中心借用時段及取消規定在公告與現場說法不一致，希望統一資訊並公開申請方式。地點約在北區光華街一帶，請權責單位查明並回覆辦理情形。",location:"北區光華街",target:"民政處",category:"區里行政"},
-  {id:"TEST11500002",subject:"市有閒置土地管理疑義",content:"市民表示，住家旁市有土地雜草長高，居民不清楚管理單位及除草期程，希望查明並定期維護。地點約在香山區牛埔路一帶，請權責單位查明並回覆辦理情形。",location:"香山區牛埔路",target:"財政處",category:"公有財產"},
-  {id:"TEST11500003",subject:"商圈攤販管理與輔導建議",content:"民眾透過線上平台反映，假日商圈臨時攤販排隊動線混亂，想了解有無商圈輔導與攤商管理機制。地點約在東區東門街一帶，請權責單位查明並回覆辦理情形。",location:"東區東門街",target:"產業發展處",category:"商圈管理"},
-  {id:"TEST11500004",subject:"校園周邊放學接送規劃",content:"陳情人指出，放學時家長接送車輛集中於校門口，希望協調學校規劃分流與交通安全宣導。地點約在東區建功一路一帶，請權責單位查明並回覆辦理情形。",location:"東區建功一路",target:"教育處",category:"校園接送交通"},
-  {id:"TEST11500005",subject:"雨水下水道疑似淤積",content:"附近住戶反映，近期大雨後路面排水變慢，水溝有落葉堆積，請查明排水系統是否需要清淤。地點約在北區武陵路一帶，請權責單位查明並回覆辦理情形。",location:"北區武陵路",target:"工務處",category:"排水設施"},
-  {id:"TEST11500006",subject:"路口左轉號誌秒數不足",content:"有市民來信表示，上班尖峰左轉車隊經常回堵，希望評估調整左轉專用時相及尖峰號誌配時。地點約在東區光復路二段與學府路口一帶，請權責單位查明並回覆辦理情形。",location:"東區光復路二段與學府路口",target:"交通處",category:"交通號誌"},
-  {id:"TEST11500007",subject:"土地使用分區查詢說明不足",content:"民眾反映，線上查詢土地使用資訊時不易辨別圖資日期，希望網站增加更新時間與申請說明。地點約在東區中央路一帶，請權責單位查明並回覆辦理情形。",location:"東區中央路",target:"地政處",category:"土地資訊"},
-  {id:"TEST11500008",subject:"長者福利申請指引不易理解",content:"市民表示，家中長輩想詢問敬老福利，網站條件分散，希望提供清楚的申請流程與常見問題。地點約在北區西大路一帶，請權責單位查明並回覆辦理情形。",location:"北區西大路",target:"社會處",category:"老人福利"},
-  {id:"TEST11500009",subject:"老屋外牆剝落通報",content:"民眾透過線上平台反映，公寓外牆磁磚疑似鬆脫，行人經過擔心掉落，請協助釐清建築物管理及通報流程。地點約在北區中山路一帶，請權責單位查明並回覆辦理情形。",location:"北區中山路",target:"都市發展處",category:"建築物安全"},
-  {id:"TEST11500010",subject:"觀光活動資訊不一致",content:"陳情人指出，假日觀光活動的活動時間與地圖資訊不同，民眾白跑一趟，請同步更新各平台公告。地點約在北區南寮漁港一帶，請權責單位查明並回覆辦理情形。",location:"北區南寮漁港",target:"城市行銷處",category:"觀光活動"},
-  {id:"TEST11500011",subject:"求職活動無障礙協助不足",content:"附近住戶反映，徵才活動現場對行動不便求職者的動線標示不足，希望改善現場引導與服務。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"勞工處",category:"就業服務"},
-  {id:"TEST11500012",subject:"公文查詢申請說明不清",content:"有市民來信表示，民眾申請調閱政府公開資訊時不知需備哪些資料，希望提供易懂範例及洽詢窗口。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"行政處",category:"資訊公開"},
-  {id:"TEST11500013",subject:"市政陳情平台進度顯示異常",content:"民眾反映，用手機查詢陳情案件時進度畫面一直轉圈，重新登入仍無法顯示，請協助檢查系統。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"數位發展處",category:"線上服務系統"},
-  {id:"TEST11500014",subject:"人行道鋪面破損",content:"市民表示，人行道數塊地磚翹起，推嬰兒車容易卡住，請勘查修復並確認無障礙通行。地點約在東區食品路一帶，請權責單位查明並回覆辦理情形。",location:"東區食品路",target:"養護工程處",category:"道路養護"},
-  {id:"TEST11500015",subject:"市政統計公開資料下載問題",content:"民眾透過線上平台反映，公開統計表中年度欄位說明不清楚，希望新增資料定義及易下載的格式。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"主計處",category:"統計資訊"},
-  {id:"TEST11500016",subject:"機關徵才公告資格解釋",content:"陳情人指出，市府徵才頁面資格條件用語不易理解，希望提供更清楚的工作內容與諮詢方式。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"人事處",category:"徵才公告"},
-  {id:"TEST11500017",subject:"採購資訊透明度建議",content:"附近住戶反映，想了解市府公共工程採購資訊可以在哪裡查到，希望集中公開進度及廉政檢舉管道。地點約在東區中正路一帶，請權責單位查明並回覆辦理情形。",location:"東區中正路",target:"政風處",category:"廉政服務"},
-  {id:"TEST11500018",subject:"深夜改裝車噪音及危險駕駛",content:"有市民來信表示，夜間常有疑似改裝車加速通過，聲響很大也讓行人不安，希望加強巡邏與交通稽查。地點約在東區公道五路一帶，請權責單位查明並回覆辦理情形。",location:"東區公道五路",target:"警察局",category:"交通執法"},
-  {id:"TEST11500019",subject:"住宅巷弄消防通道遭占用",content:"民眾反映，巷口常有車輛違停，擔心消防車無法通過，希望評估消防救災動線並宣導。地點約在北區經國路二段一帶，請權責單位查明並回覆辦理情形。",location:"北區經國路二段",target:"消防局",category:"消防通道"},
-  {id:"TEST11500020",subject:"餐飲店衛生疑慮",content:"市民表示，外帶餐點時看到店內食材未妥善覆蓋，希望依法輔導業者改善食品衛生。地點約在東區民生路一帶，請權責單位查明並回覆辦理情形。",location:"東區民生路",target:"衛生局",category:"食品衛生"}
+/* 預載測試案件（包含典型單一權責與跨單位複合案件） */
+const SAMPLE_CASES = [
+  {id:"CASE-MULTI-01", subject:"人行道多塊地磚翹起，且常有改裝機車深夜違停佔用騎樓", content:"市民反映東區光復路一帶人行道鋪面嚴重破損，推嬰兒車容易摔倒；同時晚上騎樓常有改裝車輛違規停車妨礙通行，且深夜發動噪音極大，請相關單位派員儘速處理。", location:"東區光復路", target:"養護工程處,警察局", category:"道路與治安複合"},
+  {id:"CASE-MULTI-02", subject:"商圈臨時攤販排隊動線混亂，且周邊散落大量垃圾惡臭蚊蟲孳生", content:"假日東門街商圈攤商未妥善規劃動線佔據馬路，且營業結束後巷口堆置大量營業廢棄物與廚餘，傳出惡臭引來蚊蟲，請主責單位介入輔導管理及環境清潔稽查。", location:"東區東門街", target:"產業發展處,環境保護局", category:"商圈與環保複合"},
+  {id:"TEST11500001", subject:"里民活動中心借用規則不清", content:"民眾反映，里民活動中心借用時段及取消規定在公告與現場說法不一致，希望統一資訊並公開申請方式。地點約在北區光華街一帶，請權責單位查明並回覆辦理情形。", location:"北區光華街", target:"民政處", category:"區里行政"},
+  {id:"TEST11500005", subject:"雨水下水道疑似淤積", content:"附近住戶反映，近期大雨後路面排水變慢，水溝有落葉堆積，請查明排水系統是否需要清淤。地點約在北區武陵路一帶，請權責單位查明並回覆辦理情形。", location:"北區武陵路", target:"工務處", category:"排水設施"},
+  {id:"TEST11500006", subject:"路口左轉號誌秒數不足", content:"有市民來信表示，上班尖峰左轉車隊經常回堵，希望評估調整左轉專用時相及尖峰號誌配時。地點約在東區學府路口一帶，請權責單位查明並回覆辦理情形。", location:"東區學府路口", target:"交通處", category:"交通號誌"},
+  {id:"TEST11500014", subject:"人行道鋪面破損", content:"市民表示，人行道數塊地磚翹起，推嬰兒車容易卡住，請勘查修復並確認無障礙通行。地點約在東區食品路一帶，請權責單位查明並回覆辦理情形。", location:"東區食品路", target:"養護工程處", category:"道路養護"},
+  {id:"TEST11500018", subject:"深夜改裝車噪音及危險駕駛", content:"有市民來信表示，夜間常有疑似改裝車加速通過，聲響很大也讓行人不安，希望加強巡邏與交通稽查。地點約在東區公道五路一帶，請權責單位查明並回覆辦理情形。", location:"東區公道五路", target:"警察局", category:"交通執法"}
 ];
 
-function generate100Cases(){
+function generateInitialCases(){
   const baseTime = new Date('2026-07-01T10:00:00+08:00').getTime();
-  const list = [...INITIAL_100_CASES];
-  for(let i = list.length + 1; i <= 100; i++){
+  const list = [...SAMPLE_CASES];
+  for(let i = list.length + 1; i <= 30; i++){
     const padId = 'TEST115' + String(i).padStart(5, '0');
     list.push({
       id: padId,
-      subject: `市政陳情測試案件 ${i}`,
+      subject: `市政陳情測試案例 ${i}`,
       content: `民眾反映市區相關市政陳情事項，請權責機關協助查明辦理。地點約在主要幹道周邊。`,
-      location: "東區光復路",
-      target: DEFAULT_AGENCIES_CLEAN[i % DEFAULT_AGENCIES_CLEAN.length].name,
-      category: "市政行政"
+      location: "主要幹道周邊",
+      target: DEFAULT_AGENCIES[i % DEFAULT_AGENCIES.length].name,
+      category: "一般市政"
     });
   }
   return list.map((item, idx) => ({
@@ -369,14 +361,12 @@ function generate100Cases(){
     receivedAt: new Date(baseTime + idx * 86400000).toISOString(),
     status: 'new',
     ai: null,
-    final: null,
+    final: null, // 支援平行多單位派發結構
     error: null
   }));
 }
 
-/* =========================================================
-   去識別化引擎 (遵循 DD1-3 Skill：門牌遮為單一○，段巷弄保留)
-   ========================================================= */
+/* 去識別化：門牌代換為單一「○」，保留段巷弄 */
 function deidentifyText(text){
   if(!text) return "";
   let t = String(text);
@@ -389,9 +379,6 @@ function deidentifyText(text){
   return t;
 }
 
-/* =========================================================
-   系統全域狀態（已預設配置國網 GRX API）
-   ========================================================= */
 const state = {
   view: 'bench',
   filter: 'all',
@@ -407,14 +394,13 @@ const state = {
     temperature: 0.5,
     threshold: 0.70,
     deid: true,
-    demo: false, // 預設啟用國網 GRX API
+    demo: false, // 預設使用國網 API
     rememberKey: true,
     authHeader: 'Authorization',
     authPrefix: 'Bearer '
   },
   log: [],
-  busy: new Set(),
-  justStamped: null
+  busy: new Set()
 };
 
 function loadState(){
@@ -423,18 +409,9 @@ function loadState(){
     const raw = localStorage.getItem(STORE_KEY);
     if(raw) d = JSON.parse(raw);
   } catch(e){}
-  state.cases = d?.cases?.length ? d.cases : generate100Cases();
-  state.agencies = d?.agencies?.length ? d.agencies : structuredClone(DEFAULT_AGENCIES_CLEAN);
-  state.settings = {
-    ...state.settings,
-    ...(d?.settings || {})
-  };
-  if(!state.settings.endpoint){
-    state.settings.endpoint = 'https://app.g-rapx.com/v1/chat/completions';
-    state.settings.apiKey = 'grx-DQDyCIC99zED2ylkFcMbaBtAcx4i4jmm';
-    state.settings.model = 'gemma-4-31B-it';
-    state.settings.demo = false;
-  }
+  state.cases = d?.cases?.length ? d.cases : generateInitialCases();
+  state.agencies = d?.agencies?.length ? d.agencies : structuredClone(DEFAULT_AGENCIES);
+  state.settings = { ...state.settings, ...(d?.settings || {}) };
   state.log = d?.log || [];
   state.selected = state.cases[0]?.id || null;
 }
@@ -474,69 +451,119 @@ function highlightKeywords(text, keywords){
 }
 
 /* =========================================================
-   地端分案規則引擎 (離線備援機制)
+   多訴求拆解與權責匹配引擎 (A2 + A3 核心)
    ========================================================= */
-function ruleBasedDispatch(subject, content, location){
-  const combined = `${subject} ${content} ${location}`;
+function ruleBasedMultiDispatch(subject, content, location){
+  const text = `${subject} ${content} ${location}`;
   let urgency = '一般';
-  if(/摔傷|受傷|倒塌|完全不亮|起火|火災|漏電|生命危害|追咬|追逐機車|險象環生/.test(combined)){
-    urgency = '緊急';
-  } else if(/多次反映|一直|仍未改善|重複|未獲回覆|過期/.test(combined)){
-    urgency = '優先';
-  }
+  if(/摔倒|受傷|倒塌|完全不亮|起火|火災|漏電|生命危害|追咬|險象環生/.test(text)) urgency = '緊急';
+  else if(/多次反映|一直|仍未改善|過期/.test(text)) urgency = '優先';
 
-  const scored = state.agencies.map(ag => {
-    const hits = ag.kw.filter(k => combined.includes(k));
+  // 1. 偵測各機關關鍵字命中
+  const scoredAgencies = state.agencies.map(ag => {
+    const hits = ag.kw.filter(k => text.includes(k));
     let score = hits.length;
     hits.forEach(k => { if(subject.includes(k)) score += 1.5; });
     return { agency: ag, hits, score };
-  }).sort((a, b) => b.score - a.score);
+  }).filter(s => s.score > 0).sort((a, b) => b.score - a.score);
 
-  const top = scored[0];
-  const second = scored[1];
+  // 2. 判斷是否為跨單位多訴求案件
+  // 若有兩個以上機關分數均顯著 (>= 1.5) 且命中關鍵字不同
+  const qualified = scoredAgencies.filter(s => s.score >= 1.5);
+  const isMulti = qualified.length >= 2;
 
-  if(!top || top.score === 0){
+  if(!scoredAgencies.length){
     return {
+      isMulti: false,
       lead: '',
       assist: [],
+      claims: [{ claimText: content.slice(0, 40), targetAgency: '', reason: '未能識別權責關鍵字' }],
       confidence: 0.35,
-      reason: '陳情內容未命中特定局處權責關鍵字，建議由綜合窗口或管考人員人工研判分派。',
+      reason: '未命中特定局處權責關鍵字，建議由人工研判分派。',
       keywords: [],
-      category: '待人工判定',
       urgency
     };
   }
 
-  const diff = top.score - (second ? second.score : 0);
-  let confidence = Math.min(0.96, Math.max(0.48, 0.65 + diff * 0.12));
-  const assist = scored.slice(1).filter(s => s.hits.length > 0 && s.score >= 1.5).slice(0, 2).map(s => s.agency.name);
+  if(isMulti){
+    // 建立多項拆解訴求
+    const claims = qualified.map((q, idx) => ({
+      claimId: `CLM-${idx+1}`,
+      claimText: `涉及【${q.hits.join('、')}】之相關權責事項`,
+      targetAgency: q.agency.name,
+      keywords: q.hits,
+      confidence: 0.88,
+      reason: `符合【${q.agency.name}】職掌：${q.agency.duties}。`
+    }));
 
-  return {
-    lead: top.agency.name,
-    assist,
-    confidence: Math.round(confidence * 100) / 100,
-    reason: `符合【${top.agency.name}】主管職掌（${top.agency.duties}）。關鍵字命中：「${top.hits.join('、')}」。` + (assist.length ? `另部分訴求涉及 ${assist.join('、')} 業務，建議會辦。` : ''),
-    keywords: top.hits,
-    category: top.agency.duties.split('、')[0],
-    urgency
-  };
+    const allKeywords = qualified.flatMap(q => q.hits);
+    const assignedAgencies = qualified.map(q => q.agency.name);
+
+    return {
+      isMulti: true,
+      lead: assignedAgencies[0], // 主協調單位
+      assignedAgencies: assignedAgencies, // 所有需平行派發的單位
+      claims: claims,
+      confidence: 0.89,
+      reason: `案件包含多項獨立訴求，涉及 ${assignedAgencies.join('、')} 業務，建議採取「多單位同時分案」平行辦理。`,
+      keywords: allKeywords,
+      urgency
+    };
+  } else {
+    // 單一權責案件
+    const top = scoredAgencies[0];
+    const second = scoredAgencies[1];
+    const diff = top.score - (second ? second.score : 0);
+    const confidence = Math.min(0.96, Math.max(0.55, 0.70 + diff * 0.1));
+    const assist = scoredAgencies.slice(1).filter(s => s.hits.length > 0).slice(0, 1).map(s => s.agency.name);
+
+    return {
+      isMulti: false,
+      lead: top.agency.name,
+      assignedAgencies: [top.agency.name],
+      assist: assist,
+      claims: [{
+        claimId: 'CLM-1',
+        claimText: subject,
+        targetAgency: top.agency.name,
+        keywords: top.hits,
+        confidence: confidence,
+        reason: `符合【${top.agency.name}】職掌：${top.agency.duties}`
+      }],
+      confidence: Math.round(confidence * 100) / 100,
+      reason: `符合【${top.agency.name}】職掌（${top.agency.duties}）。關鍵字：「${top.hits.join('、')}」。`,
+      keywords: top.hits,
+      urgency
+    };
+  }
 }
 
 /* =========================================================
-   國網中心 GRX API 呼叫模組
+   國網中心 GRX API 呼叫 (支援多訴求 JSON 輸出)
    ========================================================= */
-async function callLLMApi(subject, content){
+async function callLLMMultiApi(subject, content){
   const s = state.settings;
   const table = state.agencies.map(a => `- ${a.name}：${a.duties}`).join('\n');
-  const systemPrompt = `你是政府市政陳情分案專員。請根據機關職掌表，推薦陳情主旨與內容最權責的主辦機關。
+  const systemPrompt = `你是政府市政陳情分案專員。請根據機關職掌表，研判陳情案是否包含多項訴求，並為各項訴求指派對應承辦單位。
 【機關職掌表】
 ${table}
 
 【分案規則】
-1. 主辦機關與協辦機關必須自機關職掌表名稱精準選取，不得自創機關名稱。
-2. 請只回傳 JSON 物件，不要有其他 Markdown 標記或說明。
-3. JSON 格式如下：
-{"lead":"主辦機關名稱","assist":["協辦機關"],"confidence":0.85,"reason":"判定理由說明","keywords":["關鍵詞"],"category":"案件類別","urgency":"一般|優先|緊急"}`;
+1. 若陳情包含多個不同機關的事項（例如：同時反映人行道破損與違規停車），請設定 isMulti: true，將訴求拆解至 claims 陣列，並在 assignedAgencies 列出所有需要同時分案的機關。
+2. 若為單一事項，isMulti: false，assignedAgencies 填入主辦機關。
+3. 機關名稱必須完全依照職掌表名稱，不得自創。
+4. 輸出必須為標準 JSON，格式如下：
+{
+  "isMulti": true或false,
+  "assignedAgencies": ["機關A", "機關B"],
+  "claims": [
+    {"claimText": "訴求內容摘要", "targetAgency": "機關名稱", "reason": "指派理由"}
+  ],
+  "confidence": 0.88,
+  "reason": "綜合判定說明",
+  "keywords": ["關鍵詞1", "關鍵詞2"],
+  "urgency": "一般|優先|緊急"
+}`;
 
   const userPrompt = `【待分案陳情案】\n主旨：${subject}\n內容：${content}`;
 
@@ -555,12 +582,7 @@ ${table}
     stream: false
   };
 
-  const res = await fetch(s.endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload)
-  });
-
+  const res = await fetch(s.endpoint, { method: 'POST', headers, body: JSON.stringify(payload) });
   if(!res.ok){
     const errText = await res.text();
     throw new Error(`國網 API 回傳錯誤 (${res.status}): ${errText.slice(0, 150)}`);
@@ -578,7 +600,7 @@ ${table}
 }
 
 /* =========================================================
-   單一案件 AI 分析模組
+   單案 AI 研判
    ========================================================= */
 async function analyzeCase(c){
   if(state.busy.has(c.id)) return;
@@ -591,43 +613,43 @@ async function analyzeCase(c){
     const sendCont = state.settings.deid ? deidentifyText(c.content) : c.content;
 
     if(useApi()){
-      result = await callLLMApi(sendSubj, sendCont);
+      result = await callLLMMultiApi(sendSubj, sendCont);
       source = `國網 GRX (${state.settings.model})`;
     } else {
-      result = ruleBasedDispatch(sendSubj, sendCont, c.location || '');
+      result = ruleBasedMultiDispatch(sendSubj, sendCont, c.location || '');
       source = '地端離線規則引擎';
     }
 
-    const lead = agencyNames().includes(result.lead) ? result.lead : (state.agencies.find(a=>a.name.includes(result.lead))?.name || '');
-    const assist = (result.assist || []).filter(a => agencyNames().includes(a) && a !== lead);
+    const validAgencies = (result.assignedAgencies || [result.lead]).filter(a => agencyNames().includes(a));
     const confidence = Math.max(0, Math.min(1, Number(result.confidence) || 0.5));
 
     c.ai = {
-      lead: lead || '',
-      assist,
-      confidence,
-      reason: result.reason || '系統依據職掌推薦',
+      isMulti: !!result.isMulti && validAgencies.length > 1,
+      lead: validAgencies[0] || '',
+      assignedAgencies: validAgencies,
+      claims: result.claims || [],
+      confidence: confidence,
+      reason: result.reason || '系統依據職掌比對推薦',
       keywords: result.keywords || [],
-      category: result.category || '市政業務',
       urgency: result.urgency || '一般',
-      source,
+      source: source,
       ts: new Date().toISOString()
     };
 
-    const needReview = !lead || confidence < state.settings.threshold || assist.length >= 2 || c.ai.urgency === '緊急';
-    if(c.status !== 'routed') {
-      c.status = needReview ? 'review' : 'suggested';
+    const needReview = !validAgencies.length || confidence < state.settings.threshold || c.ai.urgency === '緊急';
+    if(c.status !== 'routed'){
+      c.status = needReview ? 'review' : (c.ai.isMulti ? 'suggested' : 'suggested');
     }
   } catch(err){
     c.error = err.message || String(err);
-    c.status = 'review'; // 出錯一律轉由人工審核
+    c.status = 'review';
   } finally {
     state.busy.delete(c.id);
   }
 }
 
 /* =========================================================
-   核心自動化工作流引擎（Tiered-Routing 自動分案／轉人工）
+   批次智慧工作流（自動平行分案）
    ========================================================= */
 async function runAutoDispatchWorkflow(caseList){
   const total = caseList.length;
@@ -637,57 +659,67 @@ async function runAutoDispatchWorkflow(caseList){
   const txt = $('#batchProgressText');
   bar.style.display = 'flex';
 
-  let autoSuccessCount = 0;
-  let manualReviewCount = 0;
+  let autoSingleCount = 0;
+  let autoMultiCount = 0;
+  let manualCount = 0;
 
   for(let i = 0; i < total; i++){
     const c = caseList[i];
     txt.textContent = `智慧工作流執行中 (${i+1}/${total})：案號 ${c.id}...`;
 
-    // 1. 執行 AI/規則 分析
     await analyzeCase(c);
-
-    // 2. 自動分案閘門規則檢核 (Tiered Routing Gate)
-    // 條件：必須有推薦主辦機關、信心度達設定門檻、非緊急危安案件、且無過多跨局處歧義
     const ai = c.ai;
+
     const canAutoRoute = ai &&
-      ai.lead &&
+      ai.assignedAgencies.length > 0 &&
       ai.confidence >= state.settings.threshold &&
       ai.urgency !== '緊急' &&
-      ai.assist.length < 2 &&
       !c.error;
 
     if(canAutoRoute){
-      // 自動蓋章派案
-      c.final = {
-        lead: ai.lead,
-        assist: ai.assist,
-        reason: `【系統自動分案】符合權責職掌，信心度 ${pct(ai.confidence)} 高於派案門檻 (${pct(state.settings.threshold)})。`,
-        changed: false,
-        ts: new Date().toISOString()
-      };
+      if(ai.isMulti){
+        // 多單位同時自動平行分案
+        c.final = {
+          type: 'parallel',
+          agencies: ai.assignedAgencies.map(name => ({
+            name: name,
+            scope: ai.claims.find(cl => cl.targetAgency === name)?.claimText || '分派訴求業務',
+            status: '已同時派送'
+          })),
+          reason: `【系統多單位自動分案】偵測到複合訴求，已同步分派至：${ai.assignedAgencies.join('、')}`,
+          changed: false,
+          ts: new Date().toISOString()
+        };
+        autoMultiCount++;
+      } else {
+        // 單一單位自動分案
+        c.final = {
+          type: 'single',
+          lead: ai.lead,
+          agencies: [{ name: ai.lead, scope: '全案承辦', status: '已派送' }],
+          reason: `【系統自動分案】符合權責職掌，信心度 ${pct(ai.confidence)}。`,
+          changed: false,
+          ts: new Date().toISOString()
+        };
+        autoSingleCount++;
+      }
       c.status = 'routed';
-      autoSuccessCount++;
 
       state.log.unshift({
         ts: c.final.ts,
         caseId: c.id,
         subject: c.subject,
-        historyTarget: c.historyTarget,
-        aiLead: ai.lead,
+        type: c.final.type === 'parallel' ? '多單位同時分案' : '單一分案',
+        finalUnits: c.final.agencies.map(a => a.name).join('、'),
         aiConf: ai.confidence,
-        finalLead: ai.lead,
-        finalAssist: ai.assist,
         changed: false,
         reason: c.final.reason
       });
     } else {
-      // 疑義、危安或跨單位案件：直接轉為人工待分案審核
       c.status = 'review';
-      manualReviewCount++;
+      manualCount++;
     }
 
-    // 每 5 筆儲存並重新渲染畫面
     if(i % 5 === 0 || i === total - 1){
       saveState();
       render();
@@ -698,11 +730,11 @@ async function runAutoDispatchWorkflow(caseList){
   saveState();
   render();
 
-  toast(`分案工作流完成！自動派發：${autoSuccessCount} 筆，轉人工待分案：${manualReviewCount} 筆`);
+  toast(`分案完成！單一自動派發：${autoSingleCount}，多單位同時派發：${autoMultiCount}，轉人工審核：${manualCount}`);
 }
 
 /* =========================================================
-   UI 渲染：工作台主畫面
+   UI 畫面渲染
    ========================================================= */
 const STATUS_LABELS = {new:'未分析', suggested:'推薦待核', review:'待人工審核', routed:'已分案核定'};
 
@@ -712,6 +744,7 @@ function getFilteredCases(){
     if(state.filter === 'new' && c.status !== 'new') return false;
     if(state.filter === 'todo' && !['suggested','review'].includes(c.status)) return false;
     if(state.filter === 'routed' && c.status !== 'routed') return false;
+    if(state.filter === 'multi' && !(c.ai?.isMulti || c.final?.type === 'parallel')) return false;
     if(q && !(c.id + c.subject + c.content + (c.location||'')).toLowerCase().includes(q)) return false;
     return true;
   });
@@ -720,10 +753,11 @@ function getFilteredCases(){
 function renderFilters(){
   const count = k => k === 'all' ? state.cases.length
     : k === 'todo' ? state.cases.filter(c => ['suggested','review'].includes(c.status)).length
+    : k === 'multi' ? state.cases.filter(c => c.ai?.isMulti || c.final?.type === 'parallel').length
     : state.cases.filter(c => c.status === k).length;
 
   $('#filters').innerHTML = [
-    ['all','全部'], ['new','未分析'], ['todo','待人工審核'], ['routed','已分案']
+    ['all','全部'], ['new','未分析'], ['todo','待人工審核'], ['multi','多單位案'], ['routed','已分案']
   ].map(([k, lbl]) =>
     `<button data-filter="${k}" aria-pressed="${state.filter === k}">${lbl}<b>${count(k)}</b></button>`
   ).join('');
@@ -737,12 +771,15 @@ function renderQueue(){
   }
   $('#queue').innerHTML = list.map(c => {
     const isBusy = state.busy.has(c.id);
-    const assigned = c.final?.lead || c.ai?.lead || '';
+    const isMulti = c.final?.type === 'parallel' || c.ai?.isMulti;
+    const assigned = c.final ? c.final.agencies.map(a => a.name).join('、') : (c.ai?.assignedAgencies?.join('、') || '');
+
     return `<li class="qitem" role="option" data-case="${esc(c.id)}" aria-selected="${c.id === state.selected}">
       <div class="subj">${esc(c.subject)}</div>
       <div class="meta">
         <span class="tag ${c.status}">${isBusy ? '分析中…' : STATUS_LABELS[c.status]}</span>
-        ${c.ai?.urgency === '緊急' ? '<span class="tag urgent">緊急危安</span>' : ''}
+        ${isMulti ? '<span class="tag multi">跨局處多訴求</span>' : ''}
+        ${c.ai?.urgency === '緊急' ? '<span class="tag urgent">緊急</span>' : ''}
         ${assigned ? `<span><b>${esc(assigned)}</b></span>` : ''}
         <span style="margin-left:auto">${esc(c.id)}</span>
       </div></li>`;
@@ -752,12 +789,29 @@ function renderQueue(){
 function renderLetter(){
   const c = caseById(state.selected);
   if(!c){
-    $('#letter').innerHTML = `<div class="empty">請自左側清單選擇陳情案件以開始分案。</div>`;
+    $('#letter').innerHTML = `<div class="empty">請自左側選擇案件開始分案。</div>`;
     return;
   }
   const text = state.showMasked ? deidentifyText(c.content) : c.content;
   const subj = state.showMasked ? deidentifyText(c.subject) : c.subject;
   const kws = c.ai?.keywords || [];
+
+  let claimsHtml = '';
+  if(c.ai?.claims && c.ai.claims.length > 0){
+    claimsHtml = `<div class="claims-box">
+      <div style="font-weight:700;font-size:13.5px;color:var(--blue)">📋 智慧訴求拆解清單 (${c.ai.claims.length} 項獨立事項)：</div>
+      ${c.ai.claims.map((cl, idx) => `
+        <div class="claim-card">
+          <div class="claim-head">
+            <span class="claim-title">子訴求 #${idx+1}</span>
+            <span class="tag multi">對應權責：<b>${esc(cl.targetAgency || '未定')}</b></span>
+          </div>
+          <div style="font-size:13px">${esc(cl.claimText)}</div>
+          <div class="hint">${esc(cl.reason || '')}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
 
   $('#letter').innerHTML = `
     <h1>${esc(subj)}</h1>
@@ -765,13 +819,14 @@ function renderLetter(){
       <span>案號：<b>${esc(c.id)}</b></span>
       <span>地點：${esc(c.location || '市區')}</span>
       <span>原始參考單位：${esc(c.historyTarget || '無')}</span>
-      ${c.ai?.category ? `<span>分類：${esc(c.ai.category)}</span>` : ''}
+      ${c.ai?.isMulti ? `<span class="tag multi">涉及跨單位同時分案</span>` : ''}
     </div>
     <div class="letter-tools">
       <label class="switch"><input type="checkbox" id="maskToggle" ${state.showMasked ? 'checked' : ''}> 啟用 A1 地端個資去識別化預覽（門號遮為「○」）</label>
-      ${kws.length ? `<span style="margin-left:auto">標記處為關鍵權責字詞</span>` : ''}
+      ${kws.length ? `<span style="margin-left:auto">螢光處為權責匹配關鍵字</span>` : ''}
     </div>
-    <div class="body">${highlightKeywords(text, kws)}</div>`;
+    <div class="body">${highlightKeywords(text, kws)}</div>
+    ${claimsHtml}`;
 }
 
 function renderDecision(){
@@ -787,141 +842,158 @@ function renderDecision(){
   if(c.error) html += `<div class="notice err" role="alert">連線或運算錯誤：${esc(c.error)}</div>`;
 
   if(isBusy){
-    html += `<div class="ai-card"><div style="display:flex;gap:8px;align-items:center;color:var(--muted)"><span class="spinner"></span> 正在透過【${esc(state.settings.model || 'AI')}】進行分案研判...</div></div>`;
+    html += `<div class="ai-card"><div style="display:flex;gap:8px;align-items:center;color:var(--muted)"><span class="spinner"></span> 正在進行多單位意圖分析與訴求拆解...</div></div>`;
   } else if(!ai){
     html += `<div class="ai-card">
-      <p class="section-title">AI 智慧分案建議</p>
-      <p style="margin:0 0 12px;font-size:13.5px">採用國網中心模型或地端規則庫進行意圖比對。</p>
-      <button class="btn primary big" data-action="analyze">推薦承辦機關 <span class="kbd">A</span></button></div>`;
+      <p class="section-title">AI 智慧分案分析</p>
+      <p style="margin:0 0 12px;font-size:13.5px">支援單一或跨機關多訴求平行識別。</p>
+      <button class="btn primary big" data-action="analyze">推薦承辦機關與拆案 <span class="kbd">A</span></button></div>`;
   } else {
     const isLow = ai.confidence < th;
     html += `<div>
-      <p class="section-title">建議主責機關 (Top 1)</p>
+      <p class="section-title">${ai.isMulti ? '跨單位平行分案建議' : '建議主責機關'}</p>
       <div class="ai-card">
-        <div class="lead">${esc(ai.lead || '無明確單一機關')}${ai.urgency !== '一般' ? `<small><span class="tag ${ai.urgency === '緊急' ? 'urgent' : 'review'}">${esc(ai.urgency)}</span></small>` : ''}</div>
+        <div class="lead">
+          ${ai.isMulti ? ai.assignedAgencies.map(a => `<span class="tag multi" style="font-size:16px;padding:3px 8px">${esc(a)}</span>`).join(' ') : esc(ai.lead)}
+          ${ai.urgency !== '一般' ? `<small><span class="tag ${ai.urgency === '緊急' ? 'urgent' : 'review'}">${esc(ai.urgency)}</span></small>` : ''}
+        </div>
         <div class="meter ${isLow ? 'low' : ''}">
-          <span>信心指標</span>
+          <span>信心度</span>
           <span class="bar"><i style="width:${pct(ai.confidence)}"></i></span>
           <b>${pct(ai.confidence)}</b>
         </div>
-        ${ai.assist.length ? `<div class="kv"><span class="hint">建議協辦：</span>${ai.assist.map(a => `<span class="tag">${esc(a)}</span>`).join('')}</div>` : ''}
         <p class="reason">${esc(ai.reason)}</p>
         <div class="kv hint">
-          <span>運算模式：${esc(ai.source)}</span>
+          <span>運算：${esc(ai.source)}</span>
           <button class="btn" style="margin-left:auto;padding:2px 8px;font-size:12px" data-action="analyze">重新計算</button>
         </div>
       </div></div>`;
 
     if(c.status === 'review'){
-      html += `<div class="notice">【待人工分案審核】本案件因${!ai.lead ? '無明確主辦機關' : isLow ? '信心低於安全門檻' : ai.urgency === '緊急' ? '涉及急迫危安' : '跨單位多訴求'}，系統已自動攔截轉人工確認。</div>`;
+      html += `<div class="notice">【待人工審核】本案件因${!ai.assignedAgencies.length ? '無法明確判定機關' : isLow ? '信心度低於門檻' : ai.urgency === '緊急' ? '涉及急迫危安' : '跨機關權責複合'}，需由專員手動確認。</div>`;
     }
   }
 
-  // 若已分案，呈現實體公文分案章
+  // 若已完成分案，呈現實體公文章 (支援多機關並印)
   if(c.status === 'routed' && c.final){
-    const hit = state.justStamped === c.id ? ' hit' : '';
-    html += `<div class="stamp-wrap"><div class="stamp${hit}">
-        <div class="t">市政公文分案章</div>
-        <div class="n">${esc(c.final.lead)}</div>
-        <div class="d">${c.final.assist.length ? '協辦：' + esc(c.final.assist.join('、')) + '<br>' : ''}${new Date(c.final.ts).toLocaleString('zh-TW')}</div>
-      </div></div>
-      ${c.final.changed ? `<p class="hint"><b>已人工改派：</b>${esc(c.final.reason)}</p>` : c.final.reason ? `<p class="hint"><b>分案紀錄：</b>${esc(c.final.reason)}</p>` : ''}
-      <button class="btn danger" data-action="withdraw">撤回重分</button>`;
+    html += `<div style="margin-top:10px">
+      <p class="section-title">分案核定完成 (公文分案印鑑)</p>
+      <div class="stamps-container">
+        ${c.final.agencies.map(ag => `
+          <div class="stamp ${c.final.type === 'parallel' ? 'parallel' : ''}">
+            <div class="t">市政公文分案章</div>
+            <div class="n">${esc(ag.name)}</div>
+            <div class="scope">辦理：${esc(ag.scope)}</div>
+            <div class="d">${new Date(c.final.ts).toLocaleString('zh-TW')}</div>
+          </div>
+        `).join('')}
+      </div>
+      <p class="hint" style="margin:8px 0"><b>核定紀錄：</b>${esc(c.final.reason)}</p>
+      <button class="btn danger" data-action="withdraw">撤回分案重審</button>
+    </div>`;
     el.innerHTML = html;
-    state.justStamped = null;
     return;
   }
 
-  // 人工確認或改派表單
+  // 人工確認／多單位調整表單
   if(ai && !isBusy){
-    const currentLead = c.draftLead ?? ai.lead ?? '';
-    const currentAssist = c.draftAssist ?? ai.assist ?? [];
-    const isChanged = currentLead !== ai.lead || [...currentAssist].sort().join() !== [...ai.assist].sort().join();
-    const needReason = isChanged || ai.confidence < th || !ai.lead || ai.urgency === '緊急';
-
+    const selectedUnits = c.draftUnits ?? (ai.isMulti ? ai.assignedAgencies : [ai.lead]);
     html += `<div style="display:grid;gap:12px">
-      <label class="field">核定主辦單位
-        <select id="leadSel"><option value="">-- 請選取承辦局處 --</option>${agencyNames().map(n => `<option ${n === currentLead ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
-      </label>
-      <div class="field">會辦 / 協辦機關（可複選）
-        <div class="chips" id="assistChips">${agencyNames().map(n => `<button type="button" data-assist="${esc(n)}" aria-pressed="${currentAssist.includes(n)}" ${n === currentLead ? 'disabled' : ''}>${esc(n)}</button>`).join('')}</div>
+      <div class="field">同時分派機關清單 (可多選同時派發)
+        <div class="chips" id="unitChips">
+          ${agencyNames().map(name => `
+            <button type="button" data-unit="${esc(name)}" aria-pressed="${selectedUnits.includes(name)}">${esc(name)}</button>
+          `).join('')}
+        </div>
       </div>
-      <label class="field">${isChanged ? '改派原因（必填）' : needReason ? '人工審核核定理由（必填）' : '分案備註（選填）'}
-        <textarea id="reasonTxt" rows="3" placeholder="${isChanged ? '請說明改派原由，以供後續模型品質追蹤' : '請輸入核可依據'}">${esc(c.draftReason || '')}</textarea>
+      <label class="field">分案說明與審核註記
+        <textarea id="reasonTxt" rows="3" placeholder="請填寫核定理由或跨機關分案註記...">${esc(c.draftReason || '')}</textarea>
       </label>
       <p id="formErr" class="notice err" hidden></p>
-      <button class="btn primary big" data-action="confirm">${isChanged ? '確認改派並核發公文' : '核定分案並蓋章'} <span class="kbd">Ctrl+Enter</span></button>
+      <div class="row">
+        ${ai.isMulti ? `
+          <button class="btn blue big" data-action="confirm-parallel">🚀 同時分派給上述 ${selectedUnits.length} 個單位</button>
+        ` : `
+          <button class="btn primary big" data-action="confirm-single">核定分案並蓋章 <span class="kbd">Ctrl+Enter</span></button>
+        `}
+      </div>
     </div>`;
   }
 
   el.innerHTML = html;
 }
 
-function handleConfirmCase(){
+function handleConfirm(isParallel){
   const c = caseById(state.selected);
   if(!c || !c.ai || c.status === 'routed') return;
-  const lead = $('#leadSel')?.value || '';
-  const assist = c.draftAssist ?? c.ai.assist;
+
+  const units = c.draftUnits ?? (c.ai.isMulti ? c.ai.assignedAgencies : [c.ai.lead]);
   const reason = ($('#reasonTxt')?.value || '').trim();
-  const changed = lead !== c.ai.lead || [...assist].sort().join() !== [...c.ai.assist].sort().join();
-  const needReason = changed || c.ai.confidence < state.settings.threshold || !c.ai.lead || c.ai.urgency === '緊急';
   const errEl = $('#formErr');
 
-  if(!lead){
-    errEl.textContent = '請選擇主責承辦單位！';
+  if(!units || units.length === 0){
+    errEl.textContent = '請至少選擇一個承辦單位！';
     errEl.hidden = false;
-    return;
-  }
-  if(needReason && !reason){
-    errEl.textContent = changed ? '人工改派請填寫原因，供 SLA 品質改善分析。' : '本案為待審核案件，請填寫人工核定理由。';
-    errEl.hidden = false;
-    $('#reasonTxt').focus();
     return;
   }
 
-  c.final = {
-    lead,
-    assist: assist.filter(a => a !== lead),
-    reason,
-    changed,
-    ts: new Date().toISOString()
-  };
+  if(units.length > 1 || isParallel){
+    // 多單位平行分案
+    c.final = {
+      type: 'parallel',
+      agencies: units.map(u => ({
+        name: u,
+        scope: c.ai.claims.find(cl => cl.targetAgency === u)?.claimText || '分派承辦業務',
+        status: '已平行分發'
+      })),
+      reason: reason || `【人工核定】同時分派至 ${units.join('、')} 平行處理`,
+      changed: units.sort().join() !== (c.ai.assignedAgencies||[]).sort().join(),
+      ts: new Date().toISOString()
+    };
+  } else {
+    // 單一單位分案
+    c.final = {
+      type: 'single',
+      lead: units[0],
+      agencies: [{ name: units[0], scope: '全案承辦', status: '已派發' }],
+      reason: reason || '【人工核定】單一權責承辦',
+      changed: units[0] !== c.ai.lead,
+      ts: new Date().toISOString()
+    };
+  }
+
   c.status = 'routed';
-  delete c.draftLead; delete c.draftAssist; delete c.draftReason;
+  delete c.draftUnits;
+  delete c.draftReason;
 
   state.log.unshift({
     ts: c.final.ts,
     caseId: c.id,
     subject: c.subject,
-    historyTarget: c.historyTarget,
-    aiLead: c.ai.lead,
+    type: c.final.type === 'parallel' ? '多單位同時分案' : '單一分案',
+    finalUnits: units.join('、'),
     aiConf: c.ai.confidence,
-    finalLead: lead,
-    finalAssist: c.final.assist,
-    changed,
-    reason
+    changed: c.final.changed,
+    reason: c.final.reason
   });
 
-  state.justStamped = c.id;
   saveState();
   render();
-  toast(`案件 ${c.id} 已正式核發分案至：${lead}`);
+  toast(`案件 ${c.id} 已成功分案給：${units.join('、')}`);
 }
 
-function handleWithdrawCase(){
+function handleWithdraw(){
   const c = caseById(state.selected);
   if(!c || c.status !== 'routed') return;
   state.log.unshift({
     ts: new Date().toISOString(),
     caseId: c.id,
     subject: c.subject,
-    historyTarget: c.historyTarget,
-    aiLead: c.ai?.lead || '',
+    type: '撤回',
+    finalUnits: '撤回',
     aiConf: c.ai?.confidence || '',
-    finalLead: '撤回',
-    finalAssist: [],
     changed: false,
-    reason: '人工撤回分案'
+    reason: '人工撤回重分'
   });
   c.final = null;
   c.status = 'review';
@@ -931,7 +1003,7 @@ function handleWithdrawCase(){
 }
 
 /* =========================================================
-   機關職掌庫頁面
+   職掌庫、稽核、統計與設定
    ========================================================= */
 function renderAgencies(){
   $('#view-agencies').innerHTML = `<div class="page">
@@ -952,61 +1024,53 @@ function renderAgencies(){
       </tbody></table></div></div>`;
 }
 
-/* =========================================================
-   分案紀錄與稽核頁面
-   ========================================================= */
 function renderLog(){
   $('#view-log').innerHTML = `<div class="page">
     <h2>分案日誌與稽核軌跡 (Audit Log)</h2>
-    <p class="lede">完整記錄 AI 自動派案、人工最終裁決、改派原因及歷史對照，供管考單位檢核。</p>
+    <p class="lede">完整記錄單一分案、多單位平行派案、改派原因及歷史對照，供管考單位檢核。</p>
     <div class="row" style="margin-bottom:12px">
       <button class="btn" data-action="export-log">匯出稽核報表 (CSV)</button>
       <button class="btn" data-action="export-all-cases">匯出全案 JSON</button>
     </div>
     ${state.log.length ? `<div class="table-wrap"><table>
-      <thead><tr><th>核定時間</th><th>案號</th><th>主旨</th><th>AI推薦</th><th>信心</th><th>最終主辦</th><th>改派</th><th>原因說明</th></tr></thead>
+      <thead><tr><th>核定時間</th><th>案號</th><th>主旨</th><th>分案類型</th><th>最終承辦單位</th><th>信心</th><th>改派</th><th>原因說明</th></tr></thead>
       <tbody>${state.log.map(r => `<tr>
         <td>${new Date(r.ts).toLocaleString('zh-TW')}</td>
         <td><b>${esc(r.caseId)}</b></td>
         <td>${esc(r.subject)}</td>
-        <td>${esc(r.aiLead || '—')}</td>
+        <td><span class="tag ${r.type.includes('多單位') ? 'multi' : ''}">${esc(r.type)}</span></td>
+        <td><b>${esc(r.finalUnits)}</b></td>
         <td>${r.aiConf ? pct(r.aiConf) : '—'}</td>
-        <td class="${r.changed ? 'changed' : ''}"><b>${esc(r.finalLead)}</b></td>
         <td>${r.changed ? '<span class="tag urgent">是</span>' : '<span class="tag">否</span>'}</td>
         <td>${esc(r.reason || '')}</td></tr>`).join('')}</tbody></table></div>`
     : `<div class="empty">尚無分案核定紀錄。於工作台核定案件後即會寫入紀錄。</div>`}
   </div>`;
 }
 
-/* =========================================================
-   分案統計儀表板頁面
-   ========================================================= */
 function renderStats(){
   const routed = state.cases.filter(c => c.status === 'routed');
-  const analyzed = state.cases.filter(c => c.ai);
-  const changed = routed.filter(c => c.final?.changed).length;
+  const multiCount = routed.filter(c => c.final?.type === 'parallel').length;
   const reviewCount = state.cases.filter(c => c.status === 'review').length;
-  const avgConf = analyzed.length ? analyzed.reduce((acc, c) => acc + c.ai.confidence, 0) / analyzed.length : 0;
 
   const counts = {};
   routed.forEach(c => {
-    const name = c.final.lead;
-    counts[name] = (counts[name] || 0) + 1;
+    (c.final.agencies || []).forEach(ag => {
+      counts[ag.name] = (counts[ag.name] || 0) + 1;
+    });
   });
   const maxVal = Math.max(1, ...Object.values(counts));
   const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
 
   $('#view-stats').innerHTML = `<div class="page">
     <h2>市政民意信箱分案分析儀表板</h2>
-    <p class="lede">即時呈現案件處理進度、自動分案達成率、待人工審核案件數與各機關業務分案負擔統計。</p>
+    <p class="lede">即時呈現案件處理進度、多單位同時分案統計、待人工審核案件數與各機關業務分案負擔。</p>
     <div class="stats">
       <div class="stat"><div class="v">${state.cases.length}</div><div class="l">總案件數</div></div>
       <div class="stat"><div class="v">${routed.length}</div><div class="l">已完成分案</div></div>
-      <div class="stat"><div class="v" style="color:var(--amber)">${reviewCount}</div><div class="l">待人工審核/疑義</div></div>
-      <div class="stat"><div class="v">${routed.length ? pct(changed / routed.length) : '0%'}</div><div class="l">人工改派率</div></div>
-      <div class="stat"><div class="v">${analyzed.length ? pct(avgConf) : '—'}</div><div class="l">AI 平均信心度</div></div>
+      <div class="stat"><div class="v" style="color:var(--blue)">${multiCount}</div><div class="l">多單位平行分案</div></div>
+      <div class="stat"><div class="v" style="color:var(--amber)">${reviewCount}</div><div class="l">待人工審核</div></div>
     </div>
-    <h3 style="margin:20px 0 10px;font-size:16px">各局處分派案件數量統計</h3>
+    <h3 style="margin:20px 0 10px;font-size:16px">各局處分派案件數量統計 (含平行受案件數)</h3>
     ${sorted.length ? `<div class="bars">
       ${sorted.map(([name, count]) => `<div class="barrow">
         <span><b>${esc(name)}</b></span>
@@ -1017,25 +1081,22 @@ function renderStats(){
   </div>`;
 }
 
-/* =========================================================
-   設定頁面 (國網 GRX API / 地端離線規則)
-   ========================================================= */
 function renderSettings(){
   const s = state.settings;
   $('#view-settings').innerHTML = `<div class="page">
     <h2>系統與 API 設定</h2>
-    <p class="lede">系統已預載<b>國網中心 (GRX) 專案連線配置</b>。若需離線作業，可隨時勾選切換回純地端規則模式。</p>
+    <p class="lede">系統已配置<b>國網中心 (GRX) 專案連線</b>。若需離線作業，可勾選切換回純地端規則模式。</p>
     <div class="form-grid">
-      <label class="check"><input type="checkbox" id="s-demo" ${s.demo ? 'checked' : ''}><span><b>啟用純地端離線模式 (關閉外部連線)</b><br><span class="hint">完全在地端瀏覽器運算，零外部傳輸，使用 40 局處職掌關鍵字演算法。</span></span></label>
-      <label class="field">API 端點網址 (Endpoint)<input type="url" id="s-endpoint" value="${esc(s.endpoint)}" placeholder="例如：https://app.g-rapx.com/v1/chat/completions"></label>
-      <label class="field">API 金鑰 (API Key)<input type="password" id="s-key" value="${esc(s.apiKey)}" placeholder="貼上 API Key"></label>
+      <label class="check"><input type="checkbox" id="s-demo" ${s.demo ? 'checked' : ''}><span><b>啟用純地端離線模式 (關閉外部連線)</b><br><span class="hint">完全在地端瀏覽器運算，零外部傳輸。</span></span></label>
+      <label class="field">API 端點網址 (Endpoint)<input type="url" id="s-endpoint" value="${esc(s.endpoint)}"></label>
+      <label class="field">API 金鑰 (API Key)<input type="password" id="s-key" value="${esc(s.apiKey)}"></label>
       <label class="check"><input type="checkbox" id="s-remember" ${s.rememberKey ? 'checked' : ''}><span>在本機瀏覽器保存金鑰</span></label>
-      <label class="field">模型名稱 (Model)<input type="text" id="s-model" value="${esc(s.model)}" placeholder="例如：gemma-4-31B-it"></label>
+      <label class="field">模型名稱 (Model)<input type="text" id="s-model" value="${esc(s.model)}"></label>
       <div class="row">
-        <label class="field" style="flex:1">安全派案門檻信心值 (低於此值轉人工待審)<input type="number" id="s-th" min="0" max="1" step="0.05" value="${s.threshold}"></label>
+        <label class="field" style="flex:1">安全派案門檻信心值<input type="number" id="s-th" min="0" max="1" step="0.05" value="${s.threshold}"></label>
         <label class="field" style="flex:1">Temperature<input type="number" id="s-temp" min="0" max="1" step="0.05" value="${s.temperature}"></label>
       </div>
-      <label class="check"><input type="checkbox" id="s-deid" ${s.deid ? 'checked' : ''}><span><b>發送前自動去識別化 (DD1-3 Skill)</b><br><span class="hint">自動隱藏門牌、姓名、電話、身分證等，符合資安規範。</span></span></label>
+      <label class="check"><input type="checkbox" id="s-deid" ${s.deid ? 'checked' : ''}><span><b>發送前自動去識別化 (DD1-3 Skill)</b></span></label>
       <div class="row">
         <button class="btn primary" data-action="save-settings">儲存設定</button>
         <button class="btn" data-action="test-api" id="testBtn">測試國網連線</button>
@@ -1044,7 +1105,7 @@ function renderSettings(){
     </div>
     <h3 style="margin:24px 0 8px;font-size:16px">測試資料復原</h3>
     <div class="row">
-      <button class="btn danger" data-action="reset-100">重置並還原預設 100 筆測試案例</button>
+      <button class="btn danger" data-action="reset-cases">重置並還原預設測試案例</button>
     </div>
   </div>`;
 }
@@ -1064,9 +1125,6 @@ function saveSettingsForm(){
   toast('設定已成功儲存！');
 }
 
-/* =========================================================
-   總體渲染與切換
-   ========================================================= */
 function renderPill(){
   const p = $('#modePill');
   p.className = 'pill' + (useApi() ? ' live' : '');
@@ -1104,7 +1162,7 @@ function switchView(viewName){
 }
 
 /* =========================================================
-   全域事件委派
+   事件監聽
    ========================================================= */
 document.addEventListener('click', async e => {
   const t = e.target.closest('button, li.qitem');
@@ -1118,12 +1176,12 @@ document.addEventListener('click', async e => {
     state.showMasked = false;
     return render();
   }
-  if(t.dataset.assist){
+  if(t.dataset.unit){
     const c = caseById(state.selected);
     if(!c) return;
-    const cur = new Set(c.draftAssist ?? c.ai?.assist ?? []);
-    cur.has(t.dataset.assist) ? cur.delete(t.dataset.assist) : cur.add(t.dataset.assist);
-    c.draftAssist = [...cur];
+    const cur = new Set(c.draftUnits ?? (c.ai?.isMulti ? c.ai.assignedAgencies : [c.ai?.lead]));
+    cur.has(t.dataset.unit) ? cur.delete(t.dataset.unit) : cur.add(t.dataset.unit);
+    c.draftUnits = [...cur];
     return renderDecision();
   }
 
@@ -1137,8 +1195,9 @@ document.addEventListener('click', async e => {
       await runAutoDispatchWorkflow(unassigned);
       break;
     }
-    case 'confirm': handleConfirmCase(); break;
-    case 'withdraw': handleWithdrawCase(); break;
+    case 'confirm-single': handleConfirm(false); break;
+    case 'confirm-parallel': handleConfirm(true); break;
+    case 'withdraw': handleWithdraw(); break;
     case 'new-case': $('#caseDlg').showModal(); $('#newSubject').focus(); break;
     case 'import': $('#importDlg').showModal(); break;
     case 'save-settings': saveSettingsForm(); break;
@@ -1153,7 +1212,7 @@ document.addEventListener('click', async e => {
     }
     case 'reset-agencies':
       if(confirm('確認重置為預設 40 局處職掌表？')){
-        state.agencies = structuredClone(DEFAULT_AGENCIES_CLEAN);
+        state.agencies = structuredClone(DEFAULT_AGENCIES);
         saveState(); renderAgencies(); toast('已還原 40 局處職掌表');
       }
       break;
@@ -1164,8 +1223,8 @@ document.addEventListener('click', async e => {
       a.click(); break;
     }
     case 'export-log': {
-      const header = ['核定時間,案號,主旨,原始標註單位,AI建議單位,信心度,最終核定單位,是否改派,原因理由'];
-      const rows = state.log.map(r => `"${r.ts}","${r.caseId}","${r.subject}","${r.historyTarget||''}","${r.aiLead||''}","${r.aiConf||''}","${r.finalLead||''}","${r.changed?'是':'否'}","${(r.reason||'').replace(/"/g,'""')}"`);
+      const header = ['核定時間,案號,主旨,分案類型,最終分派單位,信心度,是否改派,原因理由'];
+      const rows = state.log.map(r => `"${r.ts}","${r.caseId}","${r.subject}","${r.type}","${r.finalUnits}","${r.aiConf||''}","${r.changed?'是':'否'}","${(r.reason||'').replace(/"/g,'""')}"`);
       const csv = '\uFEFF' + [header, ...rows].join('\n');
       const blob = new Blob([csv], {type:'text/csv'});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '民意信箱分案稽核日誌.csv';
@@ -1184,22 +1243,22 @@ document.addEventListener('click', async e => {
       }
       btn.disabled = true; out.textContent = '連線測試中（呼叫國網 GRX API）...';
       try {
-        const res = await callLLMApi('路面破損', '路面有坑洞且路燈故障不亮');
-        out.textContent = `連線成功！國網模型研判主辦機關為：【${res.lead}】（信心值：${res.confidence}，理由：${res.reason}）`;
+        const res = await callLLMMultiApi('人行道損壞與違停', '人行道地磚破損，且路旁常有改裝車違停佔用');
+        out.textContent = `連線成功！國網模型研判分派至：【${res.assignedAgencies.join('、')}】（多單位：${res.isMulti?'是':'否'}，理由：${res.reason}）`;
       } catch(err){
         out.textContent = `連線失敗：${err.message}`;
       }
       btn.disabled = false;
       break;
     }
-    case 'reset-100':
-      if(confirm('確認清空現有進度並重置為 100 筆測試案例？')){
-        state.cases = generate100Cases();
+    case 'reset-cases':
+      if(confirm('確認清空現有進度並重置為範例案例？')){
+        state.cases = generateInitialCases();
         state.log = [];
         state.selected = state.cases[0].id;
         saveState();
         render();
-        toast('已重置為 100 筆測試資料');
+        toast('已重置為範例測試資料');
       }
       break;
   }
@@ -1210,13 +1269,6 @@ document.addEventListener('change', e => {
   if(t.id === 'maskToggle'){
     state.showMasked = t.checked;
     return renderLetter();
-  }
-  if(t.id === 'leadSel'){
-    const c = caseById(state.selected);
-    if(!c) return;
-    c.draftLead = t.value;
-    c.draftAssist = (c.draftAssist ?? c.ai?.assist ?? []).filter(a => a !== t.value);
-    return renderDecision();
   }
   if(t.closest('#view-agencies') && t.dataset.f){
     const tr = t.closest('tr');
@@ -1308,7 +1360,7 @@ $('#caseDlg').addEventListener('close', () => {
   $('#newLocation').value = '';
 });
 
-// 匯入執行邏輯（支援自動分案工作流觸發）
+// 匯入執行
 $('#importDlg').addEventListener('close', async () => {
   const dlg = $('#importDlg');
   if(dlg.returnValue === 'ok'){
@@ -1393,7 +1445,6 @@ $('#importDlg').addEventListener('close', async () => {
         saveState();
         render();
 
-        // 若使用者勾選自動分案，立即啟動批次工作流
         if(shouldAutoRun && newlyImported.length > 0){
           await runAutoDispatchWorkflow(newlyImported);
         } else {
@@ -1416,13 +1467,15 @@ $('#themeBtn').addEventListener('click', () => {
   root.dataset.theme = isDark ? 'light' : 'dark';
 });
 
-// 快捷鍵支援
+// 快捷鍵
 document.addEventListener('keydown', e => {
   if(state.view !== 'bench' || document.querySelector('dialog[open]')) return;
   const isTyping = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
   if(e.key === 'Enter' && (e.ctrlKey || e.metaKey)){
     e.preventDefault();
-    return handleConfirmCase();
+    const c = caseById(state.selected);
+    if(c?.ai?.isMulti) handleConfirm(true);
+    else handleConfirm(false);
   }
   if(isTyping) return;
   const list = getFilteredCases();
